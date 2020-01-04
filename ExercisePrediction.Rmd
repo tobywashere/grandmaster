@@ -1,0 +1,61 @@
+---
+title: "Exercise Prediction"
+author: "Toby Huang"
+date: "1/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load the Data
+
+```{r loadData, cache=T}
+set.seed(123)
+training <- read.csv('pml-training.csv', stringsAsFactors=F, na.strings=c("NA", ""))
+testing <- read.csv('pml-testing.csv', stringsAsFactors=F, na.strings=c("NA", ""))
+training$classe <- as.factor(training$classe)
+training$new_window <- as.factor(training$new_window)
+
+# Remove variables that are mostly NA
+variables_to_remove <- c()
+for (i in 1:ncol(training)) {
+  if (mean(is.na(training[,i])) > 0.9) {
+    variables_to_remove <- c(variables_to_remove, i)
+  }
+}
+# Remove irrelevant variables
+variables_to_remove <- c(variables_to_remove, 1) # row index
+variables_to_remove <- c(variables_to_remove, 2) # user_name
+variables_to_remove <- c(variables_to_remove, 3, 4) # raw_timestamp
+variables_to_remove <- c(variables_to_remove, 5) # cvtd_timestamp
+training <- training[,-variables_to_remove]
+testing <- testing[,-variables_to_remove]
+```
+
+## Random forest model
+We will fit an exploratory random forest model to determine the most important variables and to estimate cross validation error. We will use function rfcv() to estimate cross validation error, and the default settings uses 5-fold cross validation. We will refine the random forest model later.
+
+```{r randomForest, cache=T}
+library(randomForest)
+exercise.rf <- randomForest(classe~., data=training, importance=T)
+exercise.result <- rfcv(training[,-55], training$classe)
+with(exercise.result, plot(n.var, error.cv, type="o", lwd=2, main="Cross Validation Error", xlab="Number of Variables", ylab="Error Rate"))
+imp <- importance(exercise.rf)
+impVar <- rownames(imp)[order(imp[,2], decreasing=T)]
+includeVars <- impVar[1:7]
+```
+
+The points along the x-axis are `r exercise.result$n.var`. It seems like the 7 most important variables are able to perfectly predict the exercise class in the cross validation results. These 7 variables are `r includeVars`. Let's pick the 7 most important variables and fit a random forest model.
+
+```{r finalModel, cache=T}
+training.important <- subset(training, select=c(includeVars, "classe"))
+testing.important <- subset(testing, select=includeVars)
+library(caret)
+exercise.rf <- train(classe~., data=training.important, method="rf")
+pred <- predict(exercise.rf, testing.important)
+write.csv(pred, file="predictions.csv")
+```
+
+Since the cross validation error was 0, I estimate that the prediction error on the testing set would be around the same or slightly higher, such as 0% to 10%.
