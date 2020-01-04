@@ -224,7 +224,8 @@ testing.important &lt;- subset(testing, select=includeVars)
 library(caret)
 exercise.rf &lt;- train(classe~., data=training.important, method=&quot;rf&quot;)
 pred &lt;- predict(exercise.rf, testing.important)
-write.csv(pred, file=&quot;predictions.csv&quot;)</code></pre>
+pred_df &lt;- data.frame(Predictions=pred)
+write.csv(pred_df, file=&quot;predictions.csv&quot;)</code></pre>
 <p>Since the cross validation error was 0, I estimate that the prediction error on the testing set would be around the same or slightly higher, such as 0% to 10%.</p>
 </div>
 

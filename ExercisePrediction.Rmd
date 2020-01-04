@@ -55,7 +55,8 @@ testing.important <- subset(testing, select=includeVars)
 library(caret)
 exercise.rf <- train(classe~., data=training.important, method="rf")
 pred <- predict(exercise.rf, testing.important)
-write.csv(pred, file="predictions.csv")
+pred_df <- data.frame(Predictions=pred)
+write.csv(pred_df, file="predictions.csv")
 ```
 
 Since the cross validation error was 0, I estimate that the prediction error on the testing set would be around the same or slightly higher, such as 0% to 10%.
