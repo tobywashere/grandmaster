@@ -34,6 +34,22 @@ training <- training[,-variables_to_remove]
 testing <- testing[,-variables_to_remove]
 ```
 
+## Decision Tree
+
+Let's try fitting a CART decision tree.
+
+```{r DecisionTree, cache=T}
+# Let's try fitting a CART tree
+library(rpart)
+library(rpart.plot)
+big.tree <- rpart(classe~., data=training, control=rpart.control(minsplit=5, cp=0.025, xval=10))
+cptable <- printcp(big.tree)
+plotcp(big.tree)
+bestcp <- cptable[which.min(cptable[,"xerror"]), 'CP']
+best.tree <- prune(big.tree, cp=bestcp)
+rpart.plot(best.tree)
+```
+
 ## Random forest model
 We will fit an exploratory random forest model to determine the most important variables and to estimate cross validation error. We will use function rfcv() to estimate cross validation error, and the default settings uses 5-fold cross validation. We will refine the random forest model later.
 
